@@ -1,8 +1,9 @@
 import { collection, collectionGroup, doc, DocumentData, getDoc, getDocs, limit, orderBy, query, QuerySnapshot, where } from 'firebase/firestore';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import React from 'react'
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import styled from 'styled-components';
 import ChatScreen from '../../Components/chatScreen';
 import SideBar from '../../Components/sideBar';
@@ -11,7 +12,19 @@ import getRecipientEmail from '../../utils/getRecipientEmail';
 
 function Chat({ chat, messages }: any) {
     const [user] = useAuthState(auth);
+    const router = useRouter();
 
+    const [chatDoc] = useDocument(doc(collection(db, "chats"), `${router.query.id}`));
+
+    if(!chatDoc || !user){
+        return (<></>);
+    }
+
+    if(!chatDoc?.data()?.users.includes(user?.email)){
+        router.push("/chat");
+        return <></>;
+    }
+    
 
     return (
         <Containter>

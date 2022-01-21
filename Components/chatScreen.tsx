@@ -1,6 +1,6 @@
 import { AttachFile } from '@mui/icons-material';
 import { Avatar, IconButton } from '@mui/material';
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAuthState } from 'react-firebase-hooks/auth';
 import styled from 'styled-components';
 import { auth, db } from '../firebase';
@@ -22,6 +22,9 @@ function ChatScreen({ chat, messages }: any) {
     const [recipientEmail] = getRecipientEmail(chat.users, logingUser);
     const [recipientCollection] = useCollection(query(collection(db, "users"), where("email", "==", recipientEmail)));
     const recipientProfile = recipientCollection?.docs?.[0]?.data();
+    
+    const endOfMessageRef = useRef<null | HTMLDivElement>(null);
+    useEffect(() => endOfMessageRef?.current?.scrollIntoView(),[]);
 
     const showMessages = () => {
         if (messageSnapShot) {
@@ -97,6 +100,7 @@ function ChatScreen({ chat, messages }: any) {
             </Header>
             <MessageContainer>
                 {showMessages()}
+                <EndOfMessages ref={endOfMessageRef}></EndOfMessages>
             </MessageContainer>
             <InputContainer>
                 <InsertEmoticonIcon />

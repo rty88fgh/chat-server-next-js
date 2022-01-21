@@ -55,7 +55,7 @@ function SideBar() {
             </Search>
 
             {
-                chatsSnapShot?.docs.map(doc => {
+                chatsSnapShot?.docs.map((doc: any) => {
                     return (<RecipientChat key={doc.id} id={doc.id} users={doc.data().users} />);
                 })
             }

@@ -8,7 +8,7 @@ function Message({ message, user }: any) {
     const [loggingUser] = useAuthState(auth);
 
     const TypeOfMessage = user === loggingUser?.email ? Sender : Receiver;
-
+    
     return (
         <Container>
             <TypeOfMessage>
