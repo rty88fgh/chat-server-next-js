@@ -1,6 +1,6 @@
 import { Avatar, Button, IconButton } from "@mui/material";
 import styled from "styled-components";
-import ChatIcon from "@mui/icons-material/chat"
+import ChatIcon from "@mui/icons-material/Chat"
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import SearchIcon from "@mui/icons-material/Search"
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -12,10 +12,10 @@ import { addDoc, collection, doc, getDocs, query, setDoc, where } from "firebase
 
 function SideBar() {
     const [user] = useAuthState(auth);
-    if (!user) return <></>;
-
     const userChatRef = collection(db, "chats");
-    const [chatsSnapShot] = useCollection(query(userChatRef, where("users", "array-contains", user.email)))
+    const [chatsSnapShot] = useCollection(query(userChatRef, where("users", "array-contains", user?.email)));
+
+    if (!user) return <></>;
     
     const createChat = async () => {
         const input = prompt("Please enter an email address for the user you wish to chat with");

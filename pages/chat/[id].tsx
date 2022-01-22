@@ -1,20 +1,22 @@
-import { collection, collectionGroup, doc, DocumentData, getDoc, getDocs, limit, orderBy, query, QuerySnapshot, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react'
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
+import { useDocument } from 'react-firebase-hooks/firestore';
 import styled from 'styled-components';
-import ChatScreen from '../../Components/chatScreen';
-import SideBar from '../../Components/sideBar';
-import { auth, db, provider } from '../../firebase';
+import ChatScreen from '../../components/chatScreen';
+import SideBar from '../../components/sideBar';
+import { auth, db } from '../../firebase';
+import { EDevice } from '../../shared/enums/common.emun';
+import useDevice from '../../shared/services/useDevice';
 import getRecipientEmail from '../../utils/getRecipientEmail';
 
 function Chat({ chat, messages }: any) {
     const [user] = useAuthState(auth);
     const router = useRouter();
-
     const [chatDoc] = useDocument(doc(collection(db, "chats"), `${router.query.id}`));
+    const [windowSize, device] = useDevice();
 
     if(!chatDoc || !user){
         return (<></>);
@@ -31,7 +33,11 @@ function Chat({ chat, messages }: any) {
             <Head>
                 <title>Chat with {getRecipientEmail(chat.users, user)}</title>
             </Head>
-            <SideBar />
+            {
+                device === EDevice.Desktop 
+                ? (<SideBar />)
+                : (<></>)
+            }
             <ChatContainer>
                 <ChatScreen chat={chat} messages={messages}></ChatScreen>
             </ChatContainer>
@@ -43,13 +49,15 @@ export default Chat;
 
 export async function getServerSideProps(context: any) {
     const chatsRef = doc(collection(db, "chats"), context.query.id);
+    const chatsDoc = await getDoc(chatsRef);
+
     const messagesRef = collection(db, `chats/${context.query.id}/messages`);
 
     const messagesSnapShot = await getDocs(query(messagesRef, orderBy("timestamp", "asc"), limit(100)));
-    const chatsRes = await getDoc(chatsRef);
+    
     const chat = {
-        id: chatsRes.id,
-        ...chatsRes.data()
+        id: chatsDoc.id,
+        ...chatsDoc.data()
     }
 
     const messages = messagesSnapShot.docs.map((doc) => ({

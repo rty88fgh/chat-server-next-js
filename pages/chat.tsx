@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import SideBar from "../Components/sideBar";
+import SideBar from "../components/sideBar";
 
 function chat() {
     return(

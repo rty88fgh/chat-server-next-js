@@ -115,13 +115,18 @@ function ChatScreen({ chat, messages }: any) {
 export default ChatScreen
 
 const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 `;
 
 const Header = styled.div`
-    display: flex;
+    display: flex;    
+    position: relative;
+    top:0;
+    padding: 0.5rem;
     flex-direction: row;
     align-items: center;
-    position: relative;
     background-color:white;
     z-index: 100;
     height: 80px;
@@ -130,7 +135,7 @@ const Header = styled.div`
 `;
 
 const UserAvatar = styled(Avatar)`
-
+    margin: 0.5rem;
 `;
 
 const HeaderInformation = styled.div`
@@ -145,10 +150,14 @@ const HeaderInformation = styled.div`
         color: gray;
         margin-top: 0px;
     }
+
+    :last-child {
+
+    }
 `;
 
 const HeaderIcon = styled.div`
-    padding-right: 1rem;
+    padding-right: 0;
     display: flex;
     justify-content: end;
 `;
@@ -156,16 +165,19 @@ const HeaderIcon = styled.div`
 const MessageContainer = styled.div`
     padding: 30px;
     background-color: #e5ded8;
-    min-height: 90vh;
+    height: 100%;
+    overflow-y: scroll;
 `;
 
-const EndOfMessages = styled.div``;
+const EndOfMessages = styled.div`
+`;
 
 const InputContainer = styled.form`
     display: flex;
+    position: relative;
     align-items: center;
     padding: 10px;
-    position: sticky;
+    
     bottom: 0;
     background-color: white;
     z-index: 100;

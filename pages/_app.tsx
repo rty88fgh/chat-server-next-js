@@ -5,9 +5,11 @@ import { auth, db } from "../firebase"
 import Login from './login';
 import { doc, collection, setDoc, serverTimestamp } from "firebase/firestore";
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [user] = useAuthState(auth);
+  const router = useRouter();
 
   useEffect(() => {
     if(user){
@@ -19,9 +21,12 @@ function MyApp({ Component, pageProps }: AppProps) {
         },{ merge: true })
       .catch(_ => console.log(_));
     }
-  }, [user])
+  }, [user]);
 
-  if(user) return <Component {...pageProps} />;
+  if(user) {
+    router.push("/chat");
+    return <Component {...pageProps} />    
+  };
 
   return (<Login />);
 }
