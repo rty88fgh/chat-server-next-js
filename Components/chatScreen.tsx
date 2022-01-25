@@ -13,6 +13,18 @@ import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon"
 import MicIcon from "@mui/icons-material/Mic"
 import getRecipientEmail from '../utils/getRecipientEmail';
 import TimeAgo from "timeago-react"
+import ListIcon from '@mui/icons-material/List';
+import { minDesktopWidth, useDevice } from '../shared/hooks/useDevice';
+import { EDevice } from '../shared/enums/common.emun';
+import { Observable, Subject } from "rxjs"
+import SideBar from './sideBar';
+
+export interface ChatScreenImport {
+    chat: any,
+    messages: any,
+    listClickEvent: Observable<boolean>
+}
+
 
 function ChatScreen({ chat, messages }: any) {
     const [logingUser] = useAuthState(auth);
@@ -22,9 +34,11 @@ function ChatScreen({ chat, messages }: any) {
     const [recipientEmail] = getRecipientEmail(chat.users, logingUser);
     const [recipientCollection] = useCollection(query(collection(db, "users"), where("email", "==", recipientEmail)));
     const recipientProfile = recipientCollection?.docs?.[0]?.data();
-    
+    const [windowSize, device] = useDevice();
     const endOfMessageRef = useRef<null | HTMLDivElement>(null);
-    useEffect(() => endOfMessageRef?.current?.scrollIntoView(),[]);
+    const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => endOfMessageRef?.current?.scrollIntoView(), []);
 
     const showMessages = () => {
         if (messageSnapShot) {
@@ -75,19 +89,24 @@ function ChatScreen({ chat, messages }: any) {
     return (
         <Container>
             <Header>
+                <ListContainer>
+                    <IconButton onClick={() => setIsOpen(!isOpen)}>
+                        <ListIcon></ListIcon>
+                    </IconButton>
+                </ListContainer>
                 {
-                    recipientProfile 
-                    ? (<UserAvatar src={recipientProfile.photoURL}/>)
-                    : (<UserAvatar>{recipientEmail.length > 1 ? undefined : recipientEmail[0][0]}</UserAvatar>)
-                }                
+                    recipientProfile
+                        ? (<UserAvatar src={recipientProfile.photoURL} />)
+                        : (<UserAvatar>{recipientEmail.length > 1 ? undefined : recipientEmail[0][0]}</UserAvatar>)
+                }
                 <HeaderInformation>
                     <h3>{recipientEmail}</h3>
                     <p>Last Seen: {" "}
-                    {
-                        recipientProfile?.lastSeen.toDate()
-                        ? ( <TimeAgo datetime={recipientProfile?.lastSeen.toDate()}></TimeAgo>)
-                        : "Unavailable"
-                    }</p>
+                        {
+                            recipientProfile?.lastSeen.toDate()
+                                ? (<TimeAgo datetime={recipientProfile?.lastSeen.toDate()}></TimeAgo>)
+                                : "Unavailable"
+                        }</p>
                 </HeaderInformation>
                 <HeaderIcon>
                     <IconButton>
@@ -108,11 +127,28 @@ function ChatScreen({ chat, messages }: any) {
                 <button hidden disabled={!input} onClick={(e) => sendMessage(e)}>Send Message</button>
                 <MicIcon />
             </InputContainer>
+            {
+                !isOpen 
+                ? (<></>)
+                : (
+                <SideBarContainer onBlur={() => setIsOpen(false)}>
+                    <SideBar></SideBar>
+                </SideBarContainer>
+                )
+            }            
         </Container>
     )
 }
 
-export default ChatScreen
+const useListClickEvent = () => {
+    const [onListClickSubject] = useState<Subject<boolean>>(new Subject<boolean>());
+
+    return [onListClickSubject.asObservable(), onListClickSubject];
+};
+
+
+
+export default ChatScreen;
 
 const Container = styled.div`
     display: flex;
@@ -190,4 +226,20 @@ const Input = styled.input`
     position: sticky;
     bottom: 0;
     background-color: whitesmoke;
+`;
+
+const ListContainer = styled.div`
+    display: flex;
+    @media screen and (min-width: ${minDesktopWidth()} ){
+        display: none;
+    }
+`;
+
+const SideBarContainer = styled.div`
+    display: flex;
+    z-index: 100;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: white;
 `;
