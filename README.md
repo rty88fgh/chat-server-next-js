@@ -1,36 +1,14 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+參考網址: https://www.youtube.com/watch?v=svlEVg0To_c
 
-## Getting Started
+利用Nextjs+Firebase做出Whatapps的聊天軟體，目前只有用到nextjs的前端部分。
 
-First, run the development server:
+使用方法，需要新增firebaseConfig.tsx放到跟目錄，裡面要幫含fiebase的設定，export 出 firebaseConfig 。
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+目前只適用於Desktop
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+代辦事項
+1. 讓Mobile也能適用
+2. chat/[id].tsx會loading太慢
+3. 目前只有接收100則訊息，想要做出能滾動時在loading剩下的訊息
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-=======
-# chat-server-next-js

@@ -24,7 +24,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, [user]);
 
   if(user) {
-    router.push("/chat");
+    //router.push("/chat");
     return <Component {...pageProps} />    
   };
 

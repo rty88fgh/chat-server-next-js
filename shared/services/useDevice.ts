@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { WindowSize } from "../abstract/windowSize";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { WindowSize } from "../interface/windowSize";
 import { EDevice } from "../enums/common.emun";
 
 const DEVICE = {
@@ -17,25 +17,26 @@ const useDevice = () => {
 
     const [device, setDevice] = useState<EDevice>(EDevice.Desktop);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
 
         const setwindowSize = () => {
+            //console.log("in thie setwindowSize. windowSize:" + windowSize);
             setWindowSize({
             height:  window.innerHeight,
             width: window.innerWidth,
-            });
-
+            });            
+            
             const resizeDevice = window.innerWidth >= DEVICE.XL 
             ? EDevice.Desktop
             : (window.innerWidth >= DEVICE.MD ? EDevice.Tablet : EDevice.Mobile) ;
 
             setDevice(resizeDevice);
         };
-        window.addEventListener("resize", setwindowSize);
+        window.addEventListener("resize",() => setwindowSize());
 
         setwindowSize();
 
-        return window.removeEventListener("resize", setwindowSize);
+        return window.removeEventListener("resize",() =>  setwindowSize());
     },[]);
     
 

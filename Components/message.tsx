@@ -8,6 +8,7 @@ function Message({ message, user }: any) {
     const [loggingUser] = useAuthState(auth);
 
     const TypeOfMessage = user === loggingUser?.email ? Sender : Receiver;
+    //const isYoutubeUrl = message?.message?.indexof("https://youtu.be/");
     
     return (
         <Container>
@@ -56,5 +57,5 @@ const Timestamp = styled.span`
     bottom: 0;
     text-align: right;
     right: 0;
-    word-wrap: nowrap;
+    white-space: nowrap;
 `;

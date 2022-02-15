@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { auth, provider, signInWithPopup } from "../firebase";
 import { useAuthState } from "react-firebase-hooks/auth"
 import Loading from "../components/loading";
+import { useRouter } from "next/router";
 
 function Login(){
     const signIn = () => {

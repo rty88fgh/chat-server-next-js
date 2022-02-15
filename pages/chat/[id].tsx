@@ -1,23 +1,25 @@
-import { collection, doc, getDoc, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { List } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, Timestamp } from 'firebase/firestore';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react'
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import styled from 'styled-components';
-import ChatScreen from '../../components/chatScreen';
+import  ChatScreen from '../../components/chatScreen';
 import SideBar from '../../components/sideBar';
 import { auth, db } from '../../firebase';
 import { EDevice } from '../../shared/enums/common.emun';
-import useDevice from '../../shared/services/useDevice';
+import { useDevice, Size, minDesktopWidth } from '../../shared/hooks/useDevice';
+import { chatInfo, chat_id, messageInfo } from '../../shared/interface/chat/chatInterfaces';
 import getRecipientEmail from '../../utils/getRecipientEmail';
 
-function Chat({ chat, messages }: any) {
+function Chat({ chat, messagesJson }: chat_id) {
     const [user] = useAuthState(auth);
     const router = useRouter();
     const [chatDoc] = useDocument(doc(collection(db, "chats"), `${router.query.id}`));
     const [windowSize, device] = useDevice();
-
     if(!chatDoc || !user){
         return (<></>);
     }
@@ -33,13 +35,11 @@ function Chat({ chat, messages }: any) {
             <Head>
                 <title>Chat with {getRecipientEmail(chat.users, user)}</title>
             </Head>
-            {
-                device === EDevice.Desktop 
-                ? (<SideBar />)
-                : (<></>)
-            }
+            <SidebarContainer>
+                <SideBar/>
+            </SidebarContainer>
             <ChatContainer>
-                <ChatScreen chat={chat} messages={messages}></ChatScreen>
+                <ChatScreen chat={chat} messagesJson={messagesJson}></ChatScreen>
             </ChatContainer>
         </Containter>
     )
@@ -53,24 +53,24 @@ export async function getServerSideProps(context: any) {
 
     const messagesRef = collection(db, `chats/${context.query.id}/messages`);
 
-    const messagesSnapShot = await getDocs(query(messagesRef, orderBy("timestamp", "asc"), limit(100)));
+    const messagesSnapShot = await getDocs(query(messagesRef, orderBy("timestamp", "desc"), limit(10)));
     
-    const chat = {
+    const chat: chatInfo = {
         id: chatsDoc.id,
+        users: chatsDoc.data()?.users,
         ...chatsDoc.data()
     }
 
-    const messages = messagesSnapShot.docs.map((doc) => ({
+    const messages: messageInfo[] = messagesSnapShot.docs.reverse().map((doc) => ({
         id: doc.id,
         ...doc.data(),
     })).map((messages: any) => ({
         ...messages,
         timestamp: messages.timestamp.toDate().getTime(),
     }));
-
     return {
         props: {
-            messages: JSON.stringify(messages),
+            messagesJson: JSON.stringify(messages),
             chat: chat
         }
     };
@@ -78,15 +78,30 @@ export async function getServerSideProps(context: any) {
 
 const Containter = styled.div`
     display: flex;
+    flex-direction: row;
 `;
 
 const ChatContainer = styled.div`
     flex: 1;
     overflow: scroll;
     height: 100vh;
+    width: 100vw;
     ::-webkit-scrollbar{
         display: none;
     }
     -ms-overflow-style: none;
     scrollbar-width: none;
+
+    @media screen and (min-width: ${minDesktopWidth()}) {
+        width: auto;
+    }
+`;
+
+const SidebarContainer = styled.section`
+    display: none;
+    padding: 0;
+    columns: auto;
+    @media screen and (min-width: ${minDesktopWidth()}) {
+        display: block;
+    }
 `;
