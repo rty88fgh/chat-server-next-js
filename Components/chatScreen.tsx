@@ -17,10 +17,9 @@ import ListIcon from '@mui/icons-material/List';
 import { minDesktopWidth, useDevice } from '../shared/hooks/useDevice';
 import { EDevice } from '../shared/enums/common.emun';
 import { Observable, Subject, timestamp } from "rxjs"
-import SideBar from './sideBar';
 import { chat_id, messageInfo } from '../shared/interface/chat/chatInterfaces';
 import moment from 'moment';
-
+import SideBar from './sideBar';
 
 function ChatScreen({ chat, messagesJson }: chat_id) {
     const [messages, setMessages] = useState(JSON.parse(messagesJson) as messageInfo[]);
@@ -216,7 +215,6 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
                 <MicIcon />
             </InputContainer>
             {
-
                 isOpen &&
                 (
                     <SideBarContainer onBlur={() => setIsOpen(false)}>

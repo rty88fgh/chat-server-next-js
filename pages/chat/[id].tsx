@@ -16,6 +16,7 @@ import { chatInfo, chat_id, messageInfo } from '../../shared/interface/chat/chat
 import getRecipientEmail from '../../utils/getRecipientEmail';
 
 function Chat({ chat, messagesJson }: chat_id) {
+
     const [user] = useAuthState(auth);
     const router = useRouter();
     const [chatDoc] = useDocument(doc(collection(db, "chats"), `${router.query.id}`));
@@ -91,7 +92,6 @@ const ChatContainer = styled.div`
     }
     -ms-overflow-style: none;
     scrollbar-width: none;
-
     @media screen and (min-width: ${minDesktopWidth()}) {
         width: auto;
     }
