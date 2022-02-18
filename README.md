@@ -8,7 +8,7 @@
 
 
 代辦事項
-1. 讓Mobile也能適用
+1. Mobile無法滿眶
 2. chat/[id].tsx會loading太慢
-3. 目前只有接收100則訊息，想要做出能滾動時在loading剩下的訊息
+3. Docker部屬怪怪的
 

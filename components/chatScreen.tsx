@@ -7,7 +7,7 @@ import { auth, db } from '../firebase';
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import { useRouter } from 'next/router';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
-import { collection, collectionGroup, doc, limit, orderBy, query, setDoc, serverTimestamp, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, collectionGroup, doc, limit, orderBy, query, setDoc, serverTimestamp, where, getDocs, Timestamp, limitToLast, onSnapshot } from 'firebase/firestore';
 import Message from './message';
 import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon"
 import MicIcon from "@mui/icons-material/Mic"
@@ -15,15 +15,12 @@ import getRecipientEmail from '../utils/getRecipientEmail';
 import TimeAgo from "timeago-react"
 import ListIcon from '@mui/icons-material/List';
 import { minDesktopWidth, useDevice } from '../shared/hooks/useDevice';
-import { EDevice } from '../shared/enums/common.emun';
-import { Observable, Subject, timestamp } from "rxjs"
 import { chat_id, messageInfo } from '../shared/interface/chat/chatInterfaces';
 import moment from 'moment';
 import SideBar from './sideBar';
 
 function ChatScreen({ chat, messagesJson }: chat_id) {
     const [messages, setMessages] = useState(JSON.parse(messagesJson) as messageInfo[]);
-    const [isLoading, setIsLoading] = useState(false);
     const [logingUser] = useAuthState(auth);
     const router = useRouter();
     const [input, setInput] = useState("");
@@ -33,26 +30,51 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
     const endOfMessageRef = useRef<null | HTMLDivElement>(null);
     const messageContainerRef = useRef<null | HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [lastMessage] = useCollection(query(collection(db, `chats/${router.query.id}/messages`), orderBy("timestamp", "asc"), limitToLast(1)));
+    const [isGoToEnd, setIsGoToEnd] = useState(true);
+
+    useEffect(() => {
+        if (!lastMessage ||
+            messages.find(msg => msg.id === lastMessage?.docs[0].id) ||
+            !lastMessage?.docs[0].data().timestamp) {
+            return;
+        }
+        setMessages([...messages, {
+            ...lastMessage?.docs[0].data(),
+            id: lastMessage?.docs[0].id,
+            timestamp: lastMessage?.docs[0].data().timestamp.toDate().getTime()
+        } as messageInfo]);
+        setIsGoToEnd(true);
+    }, [lastMessage]);
 
     useEffect(() => {
         endOfMessageRef?.current?.scrollIntoView();
-        messageContainerRef.current?.addEventListener("scroll", onMessageContainerScroll);
+        
     }, []);
 
+    useEffect(() => {        
+        if (isGoToEnd) {
+            endOfMessageRef?.current?.scrollIntoView();
+        }
+        messageContainerRef.current?.addEventListener("scroll", onMessageContainerScroll);
+        return () => {
+            messageContainerRef.current?.removeEventListener("scroll", onMessageContainerScroll);
+        };
+    }, [messages]);
+
     const onMessageContainerScroll = async (e: Event) => {
-        if (!e.currentTarget || !(e.currentTarget instanceof HTMLDivElement) || isLoading) {
+        if (!e.currentTarget || !(e.currentTarget instanceof HTMLDivElement)) {
             return;
         }
         const target = e.currentTarget as HTMLDivElement;
-
-        if(target.scrollTop !== 0){
+        if (target.scrollTop !== 0) {
             return;
         }
-        setIsLoading(true);      
-        const getEarlierMessageQuery = await getDocs(query(collection(db, `chats/${router.query.id}/messages`), where("timestamp", "<", new Date(messages[0].timestamp)), orderBy("timestamp", "desc"), limit(10)));
+        const getEarlierMessageQuery = await getDocs(query(collection(db, `chats/${router.query.id}/messages`), where("timestamp", "<", new Date(messages.sort(m => m.timestamp)[0].timestamp)), orderBy("timestamp", "desc"), limit(10)));
         if (!getEarlierMessageQuery || getEarlierMessageQuery.docs.length === 0) {
             return;
         }
+
 
         const earlyMessages = getEarlierMessageQuery.docs.reverse().map(doc => {
             return {
@@ -61,61 +83,35 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
                 timestamp: doc.data().timestamp.toDate().getTime()
             } as messageInfo;
         })
-
-        //setMessages([...earlyMessages, ...messages]);
-        messages.unshift(...earlyMessages)
-        setIsLoading(false);
+        setIsGoToEnd(false);
+        setMessages([...earlyMessages, ...messages]);
     };
 
     const showMessages = () => {
-        // if (messageSnapShot) {
-        //     return messageSnapShot.docs.sort(message => message.data()?.timestamp).reverse().map(message => (
-        //         <Message
-        //             key={message.id}
-        //             user={message.data().user}
-        //             message=
-        //             {({
-        //                 ...message.data(),
-        //                 timestamp: message.data().timestamp?.toDate().getTime()
-        //             })}
-        //         />
-        //     ));
-        // } else {
-        //     return JSON.parse(messages).map((message: any) => (
-        //         <Message
-        //             key={message.id}
-        //             user={message.user}
-        //             message=
-        //             {({
-        //                 ...message,
-        //                 timestamp: (new Date(message.timestamp)).getTime()
-        //             })}
-        //         />
-        //     ));
-        // }
-        if(!messages){
+        if (!messages) {
             return false;
         }
 
         const messageHistory = messages.sort(msg => msg.timestamp)
             .reduce((groups, item) => {
                 const key = new Date(item.timestamp).toDateString();
-                groups.set(key,[...groups.get(key) || [], item])
+                groups.set(key, [...groups.get(key) || [], item])
                 return groups;
             }, new Map<string, messageInfo[]>());
 
-        if(!messageHistory){
+        if (!messageHistory) {
             return false;
         }
 
         const result: any[] = [];
-        messageHistory.forEach((group,key) => {
+        messageHistory.forEach((group, key) => {
             result.push((
                 <>
-                    <div style={{ 
-                        display:'flex',
+                    <div style={{
+                        display: 'flex',
                         justifyContent: 'center',
-                        }}>
+                    }}
+                        key={key}>
                         <span style={{
                             display: 'flex',
                             textAlign: 'center',
@@ -123,11 +119,11 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
                             color: 'white',
                             padding: '5px',
                             borderRadius: '10%',
-                        }}>{moment(new Date(key)).format('yyyy/MM/D')}
+                        }} key={moment(new Date(key)).format('yyyy/MM/D')}>{moment(new Date(key)).format('yyyy/MM/D')}
                         </span>
-                    </div>      
+                    </div>
                     {
-                        group.map((message: messageInfo) => (            
+                        group.map((message: messageInfo) => (
                             <Message
                                 key={message.id}
                                 user={message.user}
@@ -135,9 +131,9 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
                                 {({
                                     ...message,
                                     timestamp: message.timestamp
-                                })}/>
-                        )) 
-                    }             
+                                })} />
+                        ))
+                    }
                 </>
             ))
         });
@@ -159,18 +155,7 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
             photoURL: logingUser?.photoURL
         });
 
-        const lastMessage = (await getDocs(query(collection(db, `chats/${router.query.id}/messages`), orderBy("timestamp", "desc"), limit(1)))).docs[0];
-
-        const newHistory = {
-            ...lastMessage.data(),
-            id: lastMessage.id,
-            timestamp: lastMessage.data().timestamp.toDate().getTime(),
-        } as messageInfo;
-
-        messages.push(newHistory);
-
         setInput("");
-        endOfMessageRef?.current?.scrollIntoView();
     }
 
     return (
