@@ -39,53 +39,56 @@ function ChatScreen({ chat, messagesJson }: chat_id) {
             !lastMessage?.docs[0].data().timestamp) {
             return;
         }
-        setMessages([...messages, {
+        setMessages(m => [...m, {
             ...lastMessage?.docs[0].data(),
             id: lastMessage?.docs[0].id,
             timestamp: lastMessage?.docs[0].data().timestamp.toDate().getTime()
         } as messageInfo]);
         setIsGoToEnd(true);
-    }, [lastMessage]);
+    }, [lastMessage, messages]);
 
     useEffect(() => {
         endOfMessageRef?.current?.scrollIntoView();
-        
+
     }, []);
 
-    useEffect(() => {        
+    useEffect(() => {
+        const container = messageContainerRef?.current;
+        const onMessageContainerScroll = async (e: Event) => {
+            if (!e.currentTarget || !(e.currentTarget instanceof HTMLDivElement)) {
+                return;
+            }
+            const target = e.currentTarget as HTMLDivElement;
+            if (target.scrollTop !== 0) {
+                return;
+            }
+            const getEarlierMessageQuery = await getDocs(query(collection(db, `chats/${router.query.id}/messages`), where("timestamp", "<", new Date(messages.sort(m => m.timestamp)[0].timestamp)), orderBy("timestamp", "desc"), limit(10)));
+            if (!getEarlierMessageQuery || getEarlierMessageQuery.docs.length === 0) {
+                return;
+            }
+    
+    
+            const earlyMessages = getEarlierMessageQuery.docs.reverse().map(doc => {
+                return {
+                    ...doc.data(),
+                    id: doc.id,
+                    timestamp: doc.data().timestamp.toDate().getTime()
+                } as messageInfo;
+            })
+            setIsGoToEnd(false);
+            setMessages([...earlyMessages, ...messages]);
+        };
+
         if (isGoToEnd) {
             endOfMessageRef?.current?.scrollIntoView();
         }
-        messageContainerRef.current?.addEventListener("scroll", onMessageContainerScroll);
+        container?.addEventListener("scroll", onMessageContainerScroll);
         return () => {
-            messageContainerRef.current?.removeEventListener("scroll", onMessageContainerScroll);
+            container?.removeEventListener("scroll", onMessageContainerScroll);
         };
-    }, [messages]);
-
-    const onMessageContainerScroll = async (e: Event) => {
-        if (!e.currentTarget || !(e.currentTarget instanceof HTMLDivElement)) {
-            return;
-        }
-        const target = e.currentTarget as HTMLDivElement;
-        if (target.scrollTop !== 0) {
-            return;
-        }
-        const getEarlierMessageQuery = await getDocs(query(collection(db, `chats/${router.query.id}/messages`), where("timestamp", "<", new Date(messages.sort(m => m.timestamp)[0].timestamp)), orderBy("timestamp", "desc"), limit(10)));
-        if (!getEarlierMessageQuery || getEarlierMessageQuery.docs.length === 0) {
-            return;
-        }
+    }, [messages, isGoToEnd, router.query]);
 
 
-        const earlyMessages = getEarlierMessageQuery.docs.reverse().map(doc => {
-            return {
-                ...doc.data(),
-                id: doc.id,
-                timestamp: doc.data().timestamp.toDate().getTime()
-            } as messageInfo;
-        })
-        setIsGoToEnd(false);
-        setMessages([...earlyMessages, ...messages]);
-    };
 
     const showMessages = () => {
         if (!messages) {
